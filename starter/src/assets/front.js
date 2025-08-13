@@ -7,8 +7,6 @@ const cartTotalEl = document.querySelector('.cart-total');
 const payButtonEl = document.querySelector('.pay');
 const cashReceivedInputEl = document.querySelector('.received');
 const paymentSummaryEl = document.querySelector('.pay-summary');
-const emptyCartBtnContainer = document.querySelector('.empty-btn');
-const currencySelectorContainer = document.querySelector('.currency-selector');
 const addProductForm = document.getElementById('add-product-form');
 const ccForm = document.getElementById('credit-card-form');
 const clearReceiptBtn = document.querySelector('.clear-receipt-btn');
@@ -21,13 +19,10 @@ let remainingBalance = null;
 // =====================
 // UI DRAWING FUNCTIONS
 // =====================
-/**
- * Renders the list of available products.
- */
 function drawProducts() {
   if (!productListEl) return;
-  productListEl.innerHTML = products.map(product => {
-    const price = formatCurrency(product.price);
+  productListEl.innerHTML = shoppingCart.products.map(product => {
+    const price = shoppingCart.formatCurrency(product.price);
     return `
       <div class="product-item" data-product-id='${product.productId}'>
         <img src='${product.image}' alt='${product.name}'>
@@ -39,17 +34,14 @@ function drawProducts() {
   }).join('');
 }
 
-/**
- * Renders the items currently in the shopping cart.
- */
 function drawCart() {
   if (!cartListEl) return;
-  if (cart.length === 0) {
+  if (shoppingCart.cart.length === 0) {
     cartListEl.innerHTML = 'Cart Empty';
     return;
   }
-  cartListEl.innerHTML = cart.map(product => {
-    const itemTotal = formatCurrency(product.price * product.quantity);
+  cartListEl.innerHTML = shoppingCart.cart.map(product => {
+    const itemTotal = shoppingCart.formatCurrency(product.price * product.quantity);
     return `
       <div class="cart-item" data-product-id='${product.productId}'>
         <h3>${product.name}</h3>
@@ -63,18 +55,12 @@ function drawCart() {
   }).join('');
 }
 
-/**
- * Renders the final checkout total.
- */
 function drawCheckout() {
   if (!cartTotalEl) return;
-  const cartSum = formatCurrency(cartTotal());
+  const cartSum = shoppingCart.formatCurrency(shoppingCart.cartTotal());
   cartTotalEl.innerHTML = `<p>Cart Total: ${cartSum}</p>`;
 }
 
-/**
- * A single function to update all parts of the UI.
- */
 function updateUI() {
   drawProducts();
   drawCart();
@@ -88,7 +74,7 @@ function handleProductClick(event) {
   const productItem = event.target.closest('.product-item');
   if (event.target.classList.contains('add-to-cart') && productItem) {
     const productId = parseInt(productItem.dataset.productId, 10);
-    addProductToCart(productId);
+    shoppingCart.addProductToCart(productId);
     updateUI();
   }
 }
@@ -100,9 +86,9 @@ function handleCartClick(event) {
   const productId = parseInt(cartItem.dataset.productId, 10);
   const targetClass = event.target.classList;
 
-  if (targetClass.contains('remove')) removeProductFromCart(productId);
-  else if (targetClass.contains('qup')) increaseQuantity(productId);
-  else if (targetClass.contains('qdown')) decreaseQuantity(productId);
+  if (targetClass.contains('remove')) shoppingCart.removeProductFromCart(productId);
+  else if (targetClass.contains('qup')) shoppingCart.increaseQuantity(productId);
+  else if (targetClass.contains('qdown')) shoppingCart.decreaseQuantity(productId);
 
   updateUI();
 }
@@ -110,7 +96,7 @@ function handleCartClick(event) {
 function handleCashPayment(event) {
   event.preventDefault();
   const amountPaid = parseFloat(cashReceivedInputEl.value) || 0;
-  const total = remainingBalance !== null ? remainingBalance : cartTotal();
+  const total = remainingBalance !== null ? remainingBalance : shoppingCart.cartTotal();
   let summaryHTML = '';
 
   if (total === 0) {
@@ -119,18 +105,18 @@ function handleCashPayment(event) {
     const change = amountPaid - total;
     if (change >= 0) {
       summaryHTML = `
-        <p>Total: ${formatCurrency(total)}</p>
-        <p>Cash Received: ${formatCurrency(amountPaid)}</p>
-        <p>Change Returned: ${formatCurrency(change)}</p>
+        <p>Total: ${shoppingCart.formatCurrency(total)}</p>
+        <p>Cash Received: ${shoppingCart.formatCurrency(amountPaid)}</p>
+        <p>Change Returned: ${shoppingCart.formatCurrency(change)}</p>
         <hr><p><strong>Thank you!</strong></p>`;
-      emptyCart();
+      shoppingCart.emptyCart();
       remainingBalance = null;
     } else {
-      remainingBalance = -change; // Remaining balance is the positive amount due
+      remainingBalance = -change;
       summaryHTML = `
-        <p>Total: ${formatCurrency(total)}</p>
-        <p>Cash Received: ${formatCurrency(amountPaid)}</p>
-        <p><strong>Remaining Balance: ${formatCurrency(remainingBalance)}</strong></p>
+        <p>Total: ${shoppingCart.formatCurrency(total)}</p>
+        <p>Cash Received: ${shoppingCart.formatCurrency(amountPaid)}</p>
+        <p><strong>Remaining Balance: ${shoppingCart.formatCurrency(remainingBalance)}</strong></p>
         <hr><p>Please pay the remaining amount.</p>`;
     }
   }
@@ -147,32 +133,26 @@ function handleCardPayment(event) {
   const expEl = document.getElementById('cc-exp');
   const cvvEl = document.getElementById('cc-cvv');
   const errorDiv = document.getElementById('cc-error');
-
-  // Simple validation
-  const numberValid = /^\d{16}$/.test(numberEl.value.replace(/\s+/g, ''));
-  const expValid = /^(0[1-9]|1[0-2])\/\d{2}$/.test(expEl.value);
-  const cvvValid = /^\d{3,4}$/.test(cvvEl.value);
-
-  errorDiv.style.color = 'red'; // Default to error color
-  if (!numberValid) {
+  
+  errorDiv.style.color = 'red';
+  if (!/^\d{16}$/.test(numberEl.value.replace(/\s+/g, ''))) {
     errorDiv.textContent = 'Invalid card number. Must be 16 digits.';
     return;
   }
-  if (!expValid) {
+  if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expEl.value)) {
     errorDiv.textContent = 'Invalid expiration date. Must be in MM/YY format.';
     return;
   }
-  if (!cvvValid) {
+  if (!/^\d{3,4}$/.test(cvvEl.value)) {
     errorDiv.textContent = 'Invalid CVV. Must be 3 or 4 digits.';
     return;
   }
 
-  // Success
   errorDiv.style.color = 'green';
   errorDiv.textContent = 'Payment successful! Thank you!';
-  emptyCart();
+  shoppingCart.emptyCart();
   updateUI();
-  setTimeout(() => { // Clear form and message after a delay
+  setTimeout(() => {
     ccForm.reset();
     errorDiv.textContent = '';
   }, 3000);
@@ -185,21 +165,21 @@ function handleAddProduct(event) {
   const image = document.getElementById('product-image').value;
   const productId = parseInt(document.getElementById('product-id').value, 10);
 
-  // Basic validation
-  if (!name || isNaN(price) || !image || isNaN(productId)) {
+  if (!name || !image || isNaN(price) || isNaN(productId)) {
     alert('Please fill out all fields correctly.');
     return;
   }
-  if (products.some(p => p.productId === productId)) {
-    alert('Product ID already exists.');
+  if (productId < 1) {
+    alert('Product ID must be a positive number.');
+    return;
+  }
+  if (shoppingCart.products.some(p => p.productId === productId)) {
+    alert('Product ID already exists. Please use a unique ID.');
     return;
   }
 
-  products.push({ name, price, quantity: 0, productId, image });
-
-  // Save updated products to array
-  saveProductsToStorage();
-
+  shoppingCart.products.push({ name, price, quantity: 0, productId, image });
+  
   updateUI();
   addProductForm.reset();
 }
@@ -207,14 +187,13 @@ function handleAddProduct(event) {
 function handleClearReceipt(event) {
   paymentSummaryEl.innerHTML = '';
   remainingBalance = null;
-  event.target.style.display = 'none'; // Hide the button itself
+  event.target.style.display = 'none';
 }
 
 // =====================
 // INITIALIZATION
 // =====================
 function initializeStore() {
-  // Setup Event Listeners
   if (productListEl) productListEl.addEventListener('click', handleProductClick);
   if (cartListEl) cartListEl.addEventListener('click', handleCartClick);
   if (payButtonEl) payButtonEl.addEventListener('click', handleCashPayment);
@@ -222,12 +201,10 @@ function initializeStore() {
   if (addProductForm) addProductForm.addEventListener('submit', handleAddProduct);
   if (clearReceiptBtn) clearReceiptBtn.addEventListener('click', handleClearReceipt);
   
-  // The 'Empty Cart' button and currency selector are now assumed to be in the HTML.
-  // We just need to add the event listeners.
   const emptyBtn = document.querySelector('.empty-cart-btn');
   if (emptyBtn) {
     emptyBtn.addEventListener('click', () => {
-      emptyCart();
+      shoppingCart.emptyCart();
       updateUI();
     });
   }
@@ -235,14 +212,12 @@ function initializeStore() {
   const currencySelect = document.querySelector('.currency-select');
   if (currencySelect) {
     currencySelect.addEventListener('change', (event) => {
-      switchCurrency(event.target.value);
+      shoppingCart.switchCurrency(event.target.value);
       updateUI();
     });
   }
 
-  // Initial UI Draw
   updateUI();
 }
 
-// Run the initialization function when the DOM is ready.
 document.addEventListener('DOMContentLoaded', initializeStore);
