@@ -1,0 +1,244 @@
+/* --- Layout Containers --- */
+.products-cart-row {
+  display: flex;
+  gap: 2em;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.cart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; 
+}
+
+.products-container {
+  flex: 2 1 600px;
+  min-width: 350px;
+  max-width: 700px;
+  padding: 1em;
+  width: 100%;
+}
+
+.right-cart-column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: 1 1 400px;
+  min-width: 300px;
+  max-width: 500px;
+}
+
+.shopping-cart-container {
+  width: 100%;
+  max-width: 500px;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 0.5em; 
+  margin-top: 0;
+  margin-bottom: 0.5em;
+  position: static;
+  z-index: 1;
+}
+
+.checkout-container {
+  width: 100%;
+  background: rgba(141, 200, 218, 0.829);
+  border: 2px solid #070505;
+  box-sizing: border-box;
+  padding: 0.5em; 
+  margin-top: 0;
+  margin-bottom: 0.5em; 
+  align-self: flex-end;
+}
+
+/* Ensure cart-container stacks children vertically and aligns checkout under cart */
+.cart-container > .shopping-cart-container,
+.cart-container > .checkout-container {
+  width: 100%;
+  max-width: 400px;
+}
+
+@media (max-width: 900px) {
+  .products-cart-row {
+    flex-direction: column;
+    gap: 0.5em;
+  }
+  .right-cart-column {
+    align-items: stretch;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .shopping-cart-container, .checkout-container {
+    max-width: 100%;
+    width: 100%;
+    margin-right: 0;
+    align-self: stretch;
+  }
+}
+
+/* --- Typography --- */
+* {
+  font-family: 'Google Sans', Arial, sans-serif;
+  padding: 0;
+  margin: 0;
+  background: rgba(241, 241, 238, 0.829);
+}
+
+h1 {
+  font: italic bold 40px 'Google Sans'; 
+  text-align: center;
+  padding: 0.5em; 
+}
+h2, h3 {
+  padding: 0.5em 0 0.25em;
+  font: bold 18px 'Google Sans'; 
+  text-align: center;
+}
+
+p {
+  padding-bottom: 0.5em; 
+}
+
+.products > div h3 {
+  font-weight: 800;
+  font: italic 18px 'Google Sans'; 
+  text-align: center;
+}
+
+/* Center h1 within the screen regardless of parent width */
+.shopping-cart h1 {
+  display: block;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+/* --- Product & Cart Items --- */
+.products, .cart {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.products > div {
+  margin: 0.5em;
+  padding: 1em;
+  text-align: center;
+}
+
+.products > div img {
+  max-width: 150px; 
+  height: auto;
+}
+
+.cart > div {
+  border: 1px solid #ccc;
+  margin: 0.5em;
+  padding: 1em;
+}
+
+.shopping-cart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* --- Buttons --- */
+button {
+  border: 1px solid #ccc;
+  background: rgb(93, 120, 118);
+  padding: 0.5em 1em;
+  transition: .2s ease all;
+  text-transform: uppercase;
+  font-size: 0.9em;
+}
+
+button.pay {
+  background: rgb(93, 120, 118);
+  vertical-align: middle;
+}
+
+button:hover {
+  background: rgb(147, 236, 136);
+  color: #b93d3d;
+  cursor: pointer;
+}
+
+.clear-receipt-btn {
+  display: none;
+}
+
+/* --- Forms --- */
+.received {
+  font-size: 1em;
+  padding: 0.2em;
+  border: 1px solid #ccc;
+  vertical-align: middle;
+}
+
+#add-product-form {
+  color: #021318;
+  font-size: 0.9em;
+  padding: 0.5em;
+}
+
+#add-product-form input {
+  color: #000405;
+  font-size: 0.9em;
+  margin-bottom: 0.25em;
+}
+
+/* --- Credit Card Form --- */
+#credit-card-form label {
+  display: block;
+  margin-top: 0.5em;
+}
+
+#credit-card-form input[type="text"] {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.5em;
+  box-sizing: border-box;
+}
+
+#credit-card-form button {
+  margin-top: 0.5em;
+}
+
+/* --- Misc --- */
+.currency-selector {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  font: normal 16px 'Google Sans'; /* smaller font */
+  text-align: center;
+  margin: 0 auto 0.5em auto;
+  width: 100%;
+}
+
+.currency-selector select {
+  font-size: 0.9em;
+  padding: 0.3em;
+  margin-left: 0.3em;
+  background: rgb(93, 120, 118);
+  color: #021318;
+  transition: background 0.3s, color 0.3s;
+}
+
+.currency-selector select:focus, .currency-selector select:hover {
+  background: rgb(147, 236, 136);
+  color: #b93d3d;
+}
+
+.currency-selector select option:checked {
+  background: #93ec88;
+  color: #021318;
+}

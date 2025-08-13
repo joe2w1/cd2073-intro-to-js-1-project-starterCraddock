@@ -1,79 +1,213 @@
-/* Create an array named products which you will use to add all of your product object literals that you create in the next step. */
+// =====================
+// DATA & STATE
+// =====================
+/**
+ * Saves the current products array to localStorage.
+ */
+function saveProductsToStorage() {
+  localStorage.setItem('products', JSON.stringify(products));
+}
 
-/* Create 3 or more product objects using object literal notation 
-   Each product should include five properties
-   - name: name of product (string)
-   - price: price of product (number)
-   - quantity: quantity in cart should start at zero (number)
-   - productId: unique id for the product (number)
-   - image: picture of product (url string)
-*/
+/**
+ * Loads products from localStorage or returns a default list.
+ * @returns {Array} The array of products.
+ */
+function loadProductsFromStorage() {
+  const savedProducts = localStorage.getItem('products');
+  if (savedProducts) {
+    return JSON.parse(savedProducts);
+  }
+  // Return the default list if nothing is saved
+  return [
+    { name: "Cherry", price: 2.99, quantity: 0, productId: 1, image: "../images/cherry.jpg" },
+    { name: "Orange", price: 1.99, quantity: 0, productId: 2, image: "../images/orange.jpg" },
+    { name: "Strawberry", price: 3.49, quantity: 0, productId: 3, image: "../images/strawberry.jpg" }
+  ];
+}
 
-/* Images provided in /images folder. All images from Unsplash.com
-   - cherry.jpg by Mae Mu
-   - orange.jpg by Mae Mu
-   - strawberry.jpg by Allec Gomes
-*/
+// Initialize products by loading from storage
+let products = loadProductsFromStorage();
 
-/* Declare an empty array named cart to hold the items in the cart */
+let cart = [];
+let currentCurrency = 'USD';
 
-/* Create a function named addProductToCart that takes in the product productId as an argument
-  - addProductToCart should get the correct product based on the productId
-  - addProductToCart should then increase the product's quantity
-  - if the product is not already in the cart, add it to the cart
-*/
+const currencyRates = {
+  USD: 1,
+  EUR: 0.92,
+  YEN: 155.5,
+};
 
-/* Create a function named increaseQuantity that takes in the productId as an argument
-  - increaseQuantity should get the correct product based on the productId
-  - increaseQuantity should then increase the product's quantity
-*/
+const currencySymbols = {
+  USD: '$',
+  EUR: '€',
+  YEN: '¥'
+};
 
-/* Create a function named decreaseQuantity that takes in the productId as an argument
-  - decreaseQuantity should get the correct product based on the productId
-  - decreaseQuantity should decrease the quantity of the product
-  - if the function decreases the quantity to 0, the product is removed from the cart
-*/
+// =====================
+// HELPER FUNCTIONS
+// =====================
+/**
+ * Finds a product in the products array by its ID.
+ * @param {number} productId The ID of the product.
+ * @returns {object|undefined} The product object or undefined if not found.
+ */
+const findProductById = (productId) => products.find(p => p.productId === productId);
 
-/* Create a function named removeProductFromCart that takes in the productId as an argument
-  - removeProductFromCart should get the correct product based on the productId
-  - removeProductFromCart should update the product quantity to 0
-  - removeProductFromCart should remove the product from the cart
-*/
+/**
+ * Finds a product in the cart array by its ID.
+ * @param {number} productId The ID of the product.
+ * @returns {object|undefined} The product object or undefined if not found.
+ */
+const findProductInCart = (productId) => cart.find(p => p.productId === productId);
 
-/* Create a function named cartTotal that has no parameters
-  - cartTotal should iterate through the cart to get the total cost of all products
-  - cartTotal should return the total cost of the products in the cart
-  Hint: price and quantity can be used to determine total cost
-*/
+// =====================
+// CART LOGIC
+// =====================
+/**
+ * Increases a product's quantity and adds it to the cart if not already present.
+ * @param {number} productId The ID of the product to add/increase.
+ */
+function increaseQuantity(productId) {
+  const product = findProductById(productId);
+  if (!product) {
+    console.error(`Product with ID ${productId} not found.`);
+    return;
+  }
 
-/* Create a function called emptyCart that empties the products from the cart */
+  // Ensure quantity is a number
+  if (typeof product.quantity !== 'number' || isNaN(product.quantity)) {
+    product.quantity = 0;
+  }
 
-/* Create a function named pay that takes in an amount as an argument
-  - amount is the money paid by customer
-  - pay will return a negative number if there is a remaining balance
-  - pay will return a positive number if money should be returned to customer
-  Hint: cartTotal function gives us cost of all the products in the cart  
-*/
+  product.quantity++;
 
-/* Place stand out suggestions here (stand out suggestions can be found at the bottom of the project rubric.)*/
+  // Add to cart if it's not there already
+  if (!findProductInCart(productId)) {
+    cart.push(product);
+  }
+}
 
+/**
+ * Alias for increaseQuantity, for semantic clarity when adding a new item.
+ * @param {number} productId The ID of the product to add.
+ */
+const addProductToCart = increaseQuantity;
 
-/* The following is for running unit tests. 
-   To fully complete this project, it is expected that all tests pass.
-   Run the following command in terminal to run tests
-   npm run test
-*/
+/**
+ * Decreases a product's quantity. Removes it from cart if quantity becomes 0.
+ * @param {number} productId The ID of the product to decrease.
+ */
+function decreaseQuantity(productId) {
+  const product = findProductInCart(productId);
+  if (product && product.quantity > 0) {
+    product.quantity--;
+    if (product.quantity === 0) {
+      removeProductFromCart(productId);
+    }
+  }
+}
 
-module.exports = {
-   products,
-   cart,
-   addProductToCart,
-   increaseQuantity,
-   decreaseQuantity,
-   removeProductFromCart,
-   cartTotal,
-   pay, 
-   emptyCart,
-   /* Uncomment the following line if completing the currency converter bonus */
-   // currency
+/**
+ * Removes a product entirely from the cart and resets its quantity.
+ * @param {number} productId The ID of the product to remove.
+ */
+function removeProductFromCart(productId) {
+  const product = findProductById(productId);
+  if (product) {
+    product.quantity = 0;
+  }
+  cart = cart.filter(p => p.productId !== productId);
+}
+
+/**
+ * Calculates the total cost of all items in the cart in USD.
+ * @returns {number} The total cost.
+ */
+function cartTotal() {
+  return cart.reduce((sum, product) => {
+    // Robustly handle cases where price or quantity might not be valid numbers
+    const price = (typeof product.price === 'number' && !isNaN(product.price)) ? product.price : 0;
+    const quantity = (typeof product.quantity === 'number' && !isNaN(product.quantity)) ? product.quantity : 0;
+    return sum + (price * quantity);
+  }, 0);
+}
+
+/**
+ * Empties the cart and resets all product quantities.
+ */
+function emptyCart() {
+  cart.forEach(product => {
+    if (findProductById(product.productId)) {
+      findProductById(product.productId).quantity = 0;
+    }
+  });
+  cart = [];
+}
+
+/**
+ * Calculates the difference between payment and cart total.
+ * @param {number} amountPaid The amount paid by the customer.
+ * @returns {number} The change to be returned (positive) or balance due (negative).
+ */
+function calculateChange(amountPaid) {
+  return amountPaid - cartTotal();
+}
+
+// =====================
+// CURRENCY LOGIC
+// =====================
+/**
+ * Switches the current currency and returns the new symbol.
+ * @param {string} newCurrency The new currency code (e.g., 'EUR').
+ */
+function switchCurrency(newCurrency) {
+  if (currencyRates[newCurrency]) {
+    currentCurrency = newCurrency;
+  }
+}
+
+/**
+ * Converts a price from USD to the current currency.
+ * @param {number} price The price in USD.
+ * @returns {number} The converted price.
+ */
+function getConvertedPrice(price) {
+  const validPrice = (typeof price === 'number' && !isNaN(price)) ? price : 0;
+  return validPrice * currencyRates[currentCurrency];
+}
+
+/**
+ * Formats a numerical amount into a string based on the current currency.
+ * @param {number} amount The amount to format.
+ * @returns {string} The formatted currency string.
+ */
+function formatCurrency(amount) {
+  const convertedAmount = getConvertedPrice(amount);
+  const options = { style: 'currency', currency: currentCurrency };
+
+  // Use Intl.NumberFormat for robust formatting
+  if (currentCurrency === 'YEN') {
+    options.currencyDisplay = 'narrowSymbol';
+    return new Intl.NumberFormat('ja-JP', options).format(Math.round(convertedAmount));
+  }
+  return new Intl.NumberFormat('en-US', options).format(convertedAmount);
+}
+
+// Expose functions and variables to the global scope for front.js
+// This pattern is for simple projects without a build step/bundler.
+if (typeof window !== 'undefined') {
+  window.products = products;
+  window.cart = cart;
+  window.addProductToCart = addProductToCart;
+  window.increaseQuantity = increaseQuantity;
+  window.decreaseQuantity = decreaseQuantity;
+  window.removeProductFromCart = removeProductFromCart;
+  window.emptyCart = emptyCart;
+  window.calculateChange = calculateChange;
+  window.switchCurrency = switchCurrency;
+  window.formatCurrency = formatCurrency;
+  window.cartTotal = cartTotal;
+  Object.defineProperty(window, 'currencySymbol', {
+    get: () => currencySymbols[currentCurrency]
+  });
 }

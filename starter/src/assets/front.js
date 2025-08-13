@@ -1,191 +1,248 @@
-let currencySymbol = '$';
+// =====================
+// DOM ELEMENT SELECTORS
+// =====================
+const productListEl = document.querySelector('.products');
+const cartListEl = document.querySelector('.cart');
+const cartTotalEl = document.querySelector('.cart-total');
+const payButtonEl = document.querySelector('.pay');
+const cashReceivedInputEl = document.querySelector('.received');
+const paymentSummaryEl = document.querySelector('.pay-summary');
+const emptyCartBtnContainer = document.querySelector('.empty-btn');
+const currencySelectorContainer = document.querySelector('.currency-selector');
+const addProductForm = document.getElementById('add-product-form');
+const ccForm = document.getElementById('credit-card-form');
+const clearReceiptBtn = document.querySelector('.clear-receipt-btn');
 
-// Draws product list
+// =====================
+// STATE
+// =====================
+let remainingBalance = null;
+
+// =====================
+// UI DRAWING FUNCTIONS
+// =====================
+/**
+ * Renders the list of available products.
+ */
 function drawProducts() {
-    let productList = document.querySelector('.products');
-    let productItems = '';
-    products.forEach((element) => {
-        productItems += `
-            <div data-productId='${element.productId}'>
-                <img src='${element.image}'>
-                <h3>${element.name}</h3>
-                <p>price: ${currencySymbol}${element.price}</p>
-                <button class="add-to-cart">Add to Cart</button>
-            </div>
-        `;
-    });
-    // use innerHTML so that products only drawn once
-    productList.innerHTML = productItems;
+  if (!productListEl) return;
+  productListEl.innerHTML = products.map(product => {
+    const price = formatCurrency(product.price);
+    return `
+      <div class="product-item" data-product-id='${product.productId}'>
+        <img src='${product.image}' alt='${product.name}'>
+        <h3>${product.name}</h3>
+        <p>Price: ${price}</p>
+        <button class="add-to-cart">Add to Cart</button>
+      </div>
+    `;
+  }).join('');
 }
 
-// Draws cart
+/**
+ * Renders the items currently in the shopping cart.
+ */
 function drawCart() {
-    let cartList = document.querySelector('.cart');
-    // clear cart before drawing
-    let cartItems = '';
-    cart.forEach((element) => {
-        let itemTotal = element.price * element.quantity;
-
-        cartItems += `
-            <div data-productId='${element.productId}'>
-                <h3>${element.name}</h3>
-                <p>price: ${currencySymbol}${element.price}</p>
-                <p>quantity: ${element.quantity}</p>
-                <p>total: ${currencySymbol}${itemTotal}</p>
-                <button class="qup">+</button>
-                <button class="qdown">-</button>
-                <button class="remove">remove</button>
-            </div>
-        `;
-    });
-    // use innerHTML so that cart products only drawn once
-    cart.length
-        ? (cartList.innerHTML = cartItems)
-        : (cartList.innerHTML = 'Cart Empty');
+  if (!cartListEl) return;
+  if (cart.length === 0) {
+    cartListEl.innerHTML = 'Cart Empty';
+    return;
+  }
+  cartListEl.innerHTML = cart.map(product => {
+    const itemTotal = formatCurrency(product.price * product.quantity);
+    return `
+      <div class="cart-item" data-product-id='${product.productId}'>
+        <h3>${product.name}</h3>
+        <p>Quantity: ${product.quantity}</p>
+        <p>Total: ${itemTotal}</p>
+        <button class="qup" aria-label="Increase quantity of ${product.name}">+</button>
+        <button class="qdown" aria-label="Decrease quantity of ${product.name}">-</button>
+        <button class="remove" aria-label="Remove ${product.name} from cart">Remove</button>
+      </div>
+    `;
+  }).join('');
 }
 
-// Draws checkout
+/**
+ * Renders the final checkout total.
+ */
 function drawCheckout() {
-    let checkout = document.querySelector('.cart-total');
-    checkout.innerHTML = '';
-
-    // run cartTotal() from script.js
-    let cartSum = cartTotal();
-
-    let div = document.createElement('div');
-    div.innerHTML = `<p>Cart Total: ${currencySymbol}${cartSum}`;
-    checkout.append(div);
+  if (!cartTotalEl) return;
+  const cartSum = formatCurrency(cartTotal());
+  cartTotalEl.innerHTML = `<p>Cart Total: ${cartSum}</p>`;
 }
 
-// Initialize store with products, cart, and checkout
-drawProducts();
-drawCart();
-drawCheckout();
+/**
+ * A single function to update all parts of the UI.
+ */
+function updateUI() {
+  drawProducts();
+  drawCart();
+  drawCheckout();
+}
 
-document.querySelector('.products').addEventListener('click', (e) => {
-    let productId = e.target.parentNode.getAttribute('data-productId');
-    productId *= 1;
+// =====================
+// EVENT HANDLERS
+// =====================
+function handleProductClick(event) {
+  const productItem = event.target.closest('.product-item');
+  if (event.target.classList.contains('add-to-cart') && productItem) {
+    const productId = parseInt(productItem.dataset.productId, 10);
     addProductToCart(productId);
-    drawCart();
-    drawCheckout();
-});
+    updateUI();
+  }
+}
 
-// Event delegation used to support dynamically added cart items
-document.querySelector('.cart').addEventListener('click', (e) => {
-    // Helper nested higher order function to use below
-    // Must be nested to have access to the event target
-    // Takes in a cart function as an agrument
-    function runCartFunction(fn) {
-        let productId = e.target.parentNode.getAttribute('data-productId');
-        productId *= 1;
-        for (let i = cart.length - 1; i > -1; i--) {
-            if (cart[i].productId === productId) {
-                let productId = cart[i].productId;
-                fn(productId);
-            }
-        }
-        // force cart and checkout redraw after cart function completes
-        drawCart();
-        drawCheckout();
-    }
+function handleCartClick(event) {
+  const cartItem = event.target.closest('.cart-item');
+  if (!cartItem) return;
 
-    // check the target's class and run function based on class
-    if (e.target.classList.contains('remove')) {
-        // run removeProductFromCart() from script.js
-        runCartFunction(removeProductFromCart);
-    } else if (e.target.classList.contains('qup')) {
-        // run increaseQuantity() from script.js
-        runCartFunction(increaseQuantity);
-    } else if (e.target.classList.contains('qdown')) {
-        // run decreaseQuantity() from script.js
-        runCartFunction(decreaseQuantity);
-    }
-});
+  const productId = parseInt(cartItem.dataset.productId, 10);
+  const targetClass = event.target.classList;
 
-document.querySelector('.pay').addEventListener('click', (e) => {
-    e.preventDefault();
+  if (targetClass.contains('remove')) removeProductFromCart(productId);
+  else if (targetClass.contains('qup')) increaseQuantity(productId);
+  else if (targetClass.contains('qdown')) decreaseQuantity(productId);
 
-    // Get input cash received field value, set to number
-    let amount = document.querySelector('.received').value;
-    amount *= 1;
+  updateUI();
+}
 
-    // Set cashReturn to return value of pay()
-    let cashReturn = pay(amount);
+function handleCashPayment(event) {
+  event.preventDefault();
+  const amountPaid = parseFloat(cashReceivedInputEl.value) || 0;
+  const total = remainingBalance !== null ? remainingBalance : cartTotal();
+  let summaryHTML = '';
 
-    let paymentSummary = document.querySelector('.pay-summary');
-    let div = document.createElement('div');
-
-    // If total cash received is greater than cart total thank customer
-    // Else request additional funds
-    if (cashReturn >= 0) {
-        div.innerHTML = `
-            <p>Cash Received: ${currencySymbol}${amount}</p>
-            <p>Cash Returned: ${currencySymbol}${cashReturn}</p>
-            <p>Thank you!</p>
-        `;
+  if (total === 0) {
+    summaryHTML = `<p>Cart is empty. Nothing to pay.</p>`;
+  } else {
+    const change = amountPaid - total;
+    if (change >= 0) {
+      summaryHTML = `
+        <p>Total: ${formatCurrency(total)}</p>
+        <p>Cash Received: ${formatCurrency(amountPaid)}</p>
+        <p>Change Returned: ${formatCurrency(change)}</p>
+        <hr><p><strong>Thank you!</strong></p>`;
+      emptyCart();
+      remainingBalance = null;
     } else {
-        // reset cash field for next entry
-        document.querySelector('.received').value = '';
-        div.innerHTML = `
-            <p>Cash Received: ${currencySymbol}${amount}</p>
-            <p>Remaining Balance: ${cashReturn}$</p>
-            <p>Please pay additional amount.</p>
-            <hr/>
-        `;
+      remainingBalance = -change; // Remaining balance is the positive amount due
+      summaryHTML = `
+        <p>Total: ${formatCurrency(total)}</p>
+        <p>Cash Received: ${formatCurrency(amountPaid)}</p>
+        <p><strong>Remaining Balance: ${formatCurrency(remainingBalance)}</strong></p>
+        <hr><p>Please pay the remaining amount.</p>`;
     }
+  }
 
-    paymentSummary.append(div);
-});
+  paymentSummaryEl.innerHTML = summaryHTML;
+  cashReceivedInputEl.value = '';
+  clearReceiptBtn.style.display = 'block';
+  updateUI();
+}
 
-/* Standout suggestions */
-/* Begin remove all items from cart */
-// function dropCart(){
-//     let shoppingCart = document.querySelector('.empty-btn');
-//     let div = document.createElement("button");
-//     div.classList.add("empty");
-//     div.innerHTML =`Empty Cart`;
-//     shoppingCart.append(div);
-// }
-// dropCart();
+function handleCardPayment(event) {
+  event.preventDefault();
+  const numberEl = document.getElementById('cc-number');
+  const expEl = document.getElementById('cc-exp');
+  const cvvEl = document.getElementById('cc-cvv');
+  const errorDiv = document.getElementById('cc-error');
 
-// document.querySelector('.empty-btn').addEventListener('click', (e) => {
-//     if (e.target.classList.contains('empty')){
-//         emptyCart();
-//         drawCart();
-//         drawCheckout();
-//     }
-// })
-/* End all items from cart */
+  // Simple validation
+  const numberValid = /^\d{16}$/.test(numberEl.value.replace(/\s+/g, ''));
+  const expValid = /^(0[1-9]|1[0-2])\/\d{2}$/.test(expEl.value);
+  const cvvValid = /^\d{3,4}$/.test(cvvEl.value);
 
-/* Begin currency converter */
-// function currencyBuilder(){
-//     let currencyPicker = document.querySelector('.currency-selector');
-//     let select = document.createElement("select");
-//     select.classList.add("currency-select");
-//     select.innerHTML = `<option value="USD">USD</option>
-//                         <option value="EUR">EUR</option>
-//                         <option value="YEN">YEN</option>`;
-//     currencyPicker.append(select);
-// }
-// currencyBuilder();
+  errorDiv.style.color = 'red'; // Default to error color
+  if (!numberValid) {
+    errorDiv.textContent = 'Invalid card number. Must be 16 digits.';
+    return;
+  }
+  if (!expValid) {
+    errorDiv.textContent = 'Invalid expiration date. Must be in MM/YY format.';
+    return;
+  }
+  if (!cvvValid) {
+    errorDiv.textContent = 'Invalid CVV. Must be 3 or 4 digits.';
+    return;
+  }
 
-// document.querySelector('.currency-select').addEventListener('change', function handleChange(event) {
-//     switch(event.target.value){
-//         case 'EUR':
-//             currencySymbol = '€';
-//             break;
-//         case 'YEN':
-//             currencySymbol = '¥';
-//             break;
-//         default:
-//             currencySymbol = '$';
-//             break;
-//      }
+  // Success
+  errorDiv.style.color = 'green';
+  errorDiv.textContent = 'Payment successful! Thank you!';
+  emptyCart();
+  updateUI();
+  setTimeout(() => { // Clear form and message after a delay
+    ccForm.reset();
+    errorDiv.textContent = '';
+  }, 3000);
+}
 
-//     currency(event.target.value);
-//     drawProducts();
-//     drawCart();
-//     drawCheckout();
-// });
-/* End currency converter */
-/* End standout suggestions */
+function handleAddProduct(event) {
+  event.preventDefault();
+  const name = document.getElementById('product-name').value;
+  const price = parseFloat(document.getElementById('product-price').value);
+  const image = document.getElementById('product-image').value;
+  const productId = parseInt(document.getElementById('product-id').value, 10);
+
+  // Basic validation
+  if (!name || isNaN(price) || !image || isNaN(productId)) {
+    alert('Please fill out all fields correctly.');
+    return;
+  }
+  if (products.some(p => p.productId === productId)) {
+    alert('Product ID already exists.');
+    return;
+  }
+
+  products.push({ name, price, quantity: 0, productId, image });
+
+  // Save updated products to array
+  saveProductsToStorage();
+
+  updateUI();
+  addProductForm.reset();
+}
+
+function handleClearReceipt(event) {
+  paymentSummaryEl.innerHTML = '';
+  remainingBalance = null;
+  event.target.style.display = 'none'; // Hide the button itself
+}
+
+// =====================
+// INITIALIZATION
+// =====================
+function initializeStore() {
+  // Setup Event Listeners
+  if (productListEl) productListEl.addEventListener('click', handleProductClick);
+  if (cartListEl) cartListEl.addEventListener('click', handleCartClick);
+  if (payButtonEl) payButtonEl.addEventListener('click', handleCashPayment);
+  if (ccForm) ccForm.addEventListener('submit', handleCardPayment);
+  if (addProductForm) addProductForm.addEventListener('submit', handleAddProduct);
+  if (clearReceiptBtn) clearReceiptBtn.addEventListener('click', handleClearReceipt);
+  
+  // The 'Empty Cart' button and currency selector are now assumed to be in the HTML.
+  // We just need to add the event listeners.
+  const emptyBtn = document.querySelector('.empty-cart-btn');
+  if (emptyBtn) {
+    emptyBtn.addEventListener('click', () => {
+      emptyCart();
+      updateUI();
+    });
+  }
+
+  const currencySelect = document.querySelector('.currency-select');
+  if (currencySelect) {
+    currencySelect.addEventListener('change', (event) => {
+      switchCurrency(event.target.value);
+      updateUI();
+    });
+  }
+
+  // Initial UI Draw
+  updateUI();
+}
+
+// Run the initialization function when the DOM is ready.
+document.addEventListener('DOMContentLoaded', initializeStore);

@@ -1,84 +1,171 @@
+/* --- CSS Variables (Theme) --- */
+:root {
+  --font-primary: 'Google Sans', Arial, sans-serif;
+  --color-background: rgba(241, 241, 238, 0.829);
+  --color-text: #021318;
+  --color-accent: #b93d3d;
+  --color-primary: rgb(93, 120, 118);
+  --color-primary-hover: rgb(147, 236, 136);
+  --color-container-bg: #f9f9f9;
+  --color-container-border: #ccc;
+  --checkout-bg: rgba(141, 200, 218, 0.829);
+  --checkout-border: #070505;
+  --box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* --- General & Typography --- */
 * {
-    font-family: 'Montserrat', sans-serif;
-    padding: 0;
-    margin: 0;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-primary);
+  background: var(--color-background);
+  color: var(--color-text);
 }
 
 h1 {
-    text-align: center;
-    padding: 1em;
+  font: italic bold 40px var(--font-primary);
+  text-align: center;
+  padding: 0.5em;
 }
-h2, h3 {
-    padding: 1em 0 .5em;
+
+h2 {
+  font: bold 18px var(--font-primary);
+  text-align: center;
+  padding: 0.5em 0 0.25em;
 }
+
+h3 {
+  font: italic 18px var(--font-primary);
+  text-align: center;
+  padding: 0.5em 0 0.25em;
+}
+
 p {
-    padding-bottom: 1em;
+  padding-bottom: 0.5em;
 }
-.products-container{
-    width: 100%;
-    max-width: 55em;
-    padding: 2em;
+
+/* --- Layout Containers --- */
+.products-cart-row {
+  display: flex;
+  gap: 2em;
+  align-items: flex-start;
+  max-width: 1200px;
+  margin: 0 auto;
 }
-.cart-container {
-    display: flex;
+
+.products-container {
+  flex: 2 1 600px;
+  padding-left: 1em;
 }
+
+.right-cart-column {
+  flex: 1 1 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+.shopping-cart-container,
 .checkout-container {
-    max-width: 34em;
-    padding: 2em;
-    background: #efefef;
-}
-.products, .cart{
-    display: flex;
-    flex-wrap: wrap;
+  border: 1px solid var(--color-container-border);
+  border-radius: 8px;
+  padding: 1em;
+  box-shadow: var(--box-shadow);
 }
 
-.products > div {
-    background: #f5f5f5;
-    margin: 1em;
-    padding: 2em;
+.shopping-cart-container {
+  background: var(--color-container-bg);
 }
 
-.products > div img {
-    max-width: 175px;
-    height: auto;
+.checkout-container {
+  background: var(--checkout-bg);
+  border-color: var(--checkout-border);
 }
 
-.products > div h3 {
-    font-weight: 800;
+/* --- Components: Products & Cart --- */
+.products, .cart {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.products > div,
+.cart > div {
+  margin: 0.5em;
+  padding: 1em;
+  text-align: center;
 }
 
 .cart > div {
-    border: 1px solid #ccc;
-    margin: 1em;
-    padding: 2em;
-}
-.checkout-container {
-    max-width: 34em;
-}
-.checkout {
-    margin-bottom: 4em;
+  border: 1px solid var(--color-container-border);
+  width: 100%;
 }
 
+.products > div img {
+  max-width: 150px;
+  height: auto;
+}
+
+/* --- Components: Buttons & Forms --- */
 button {
-    border: 1px solid #ccc;
-    background: #fff;
-    padding: 1em;
-    transition: .2s ease all;
-    text-transform: uppercase;
-}
-button.pay {
-    background: #f5f5f5;
-    vertical-align: middle
-}
-button:hover {
-    background: rgb(93, 120, 118);
-    color: #fff;
-    cursor: pointer;
+  border: 1px solid var(--color-container-border);
+  background: var(--color-primary);
+  padding: 0.5em 1em;
+  transition: background 0.2s ease, color 0.2s ease;
+  text-transform: uppercase;
+  font-size: 0.9em;
+  cursor: pointer;
 }
 
-.received {
-    font-size: 1.5em;
-    padding: 0.3em;
-    border: 1px solid #ccc;
-    vertical-align: middle
+button:hover {
+  background: var(--color-primary-hover);
+  color: var(--color-accent);
+}
+
+.clear-receipt-btn {
+  display: none; /* Hidden by default */
+  margin-top: 1em;
+}
+
+input, select {
+  font-size: 1em;
+  padding: 0.4em;
+  border: 1px solid var(--color-container-border);
+  margin-bottom: 0.5em;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+select {
+  background: var(--color-primary);
+  color: var(--color-text);
+  width: auto;
+  min-width: 100px;
+}
+
+select:hover {
+  background: var(--color-primary-hover);
+  color: var(--color-accent);
+}
+
+#credit-card-form label {
+  display: block;
+  margin-top: 0.5em;
+}
+
+#cc-error {
+  margin-top: 5px;
+  min-height: 1.2em; /* Prevents layout shift */
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 900px) {
+  .products-cart-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

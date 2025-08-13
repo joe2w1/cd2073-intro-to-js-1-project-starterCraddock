@@ -7,34 +7,65 @@
     <title>Shopping Cart</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;700&display=swap" rel="stylesheet">
     <link href="assets/styles.css" rel="stylesheet">
     <script src="assets/script.js" defer></script>
     <script src="assets/front.js" defer></script>
 </head>
 <body>
     <div class="shopping-cart">
-        <h1>Kirana's Fruit Stand</h1>
-        <div class="currency-selector"></div>
+        <h1>Joe's Snack Shack!</h1>
+        <div class="currency-selector">
+            <label for="currency-select">Choose a currency:</label>
+            <select class="currency-select" id="currency-select">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="YEN">YEN</option>
+            </select>
+        </div>
         <div class="cart-container">
-            <div class="products-container">
-                <h2>Products</h2>
-                <div class="products"></div>
-                <h2>Your Shopping Cart</h2>
-                <div class="empty-btn"></div>
-                <div class="cart"></div>
-            </div>
-            <div class="checkout-container">
-                <h2>Checkout</h2>
-                <div class="checkout">
-                    <div class="cart-total"></div>
-                    <form>
-                        <label>Enter Cash Received:</label>
-                        <input class="received" type="text">
-                        <button class="pay">Submit</button> 
+            <div class="products-cart-row">
+                <div class="products-container">
+                    <h2>Products</h2>
+                    <form id="add-product-form">
+                        <input type="text" id="product-name" placeholder="Name" required style="margin-bottom: 0.5em;">
+                        <input type="number" id="product-price" placeholder="Price" step="0.01" required style="margin-bottom: 0.5em;">
+                        <input type="text" id="product-image" placeholder="Image URL" required style="margin-bottom: 0.5em;">
+                        <input type="number" id="product-id" placeholder="Product ID" required style="margin-bottom: 0.5em;">
+                        <button type="submit" style="margin-bottom: 0.5em;">Add Product</button>
                     </form>
-                    <h3>Receipt</h3>
-                    <div class="pay-summary"></div>
+                    <div class="products"></div>
+                </div>
+                <div class="right-cart-column">
+                    <div class="shopping-cart-container" style="margin-bottom: 0.5em;">
+                        <h2>Your Shopping Cart</h2>
+                        <div class="empty-btn"></div>
+                        <div class="cart"></div>
+                    </div>
+                    <div class="checkout-container" style="margin-top: 0.5em;">
+                        <h2>Checkout</h2>
+                        <div class="checkout">
+                            <div class="cart-total"></div>
+                            <form>
+                                <label>Enter Cash Received:</label>
+                                <input class="received" type="text" style="margin-bottom: 0.5em;">
+                                <button class="pay" style="margin-bottom: 0.5em;">Submit</button> 
+                            </form>
+                            <form id="credit-card-form" style="margin-top: 10px;">
+                                <label>Credit Card Number:</label>
+                                <input type="text" id="cc-number" maxlength="16" pattern="\d{16}" required style="margin-bottom: 0.5em;">
+                                <label>Expiration Date (MM/YY):</label>
+                                <input type="text" id="cc-exp" maxlength="5" pattern="(0[1-9]|1[0-2])\/\d{2}" required style="margin-bottom: 0.5em;">
+                                <label>CVV:</label>
+                                <input type="text" id="cc-cvv" maxlength="3" pattern="\d{3}" required style="margin-bottom: 0.5em;">
+                                <button type="submit" style="margin-bottom: 0.5em;">Pay with Card</button>
+                                <div id="cc-error" style="color: red; margin-top: 5px;"></div>
+                            </form>
+                            <h3>Receipt</h3>
+                            <div class="pay-summary"></div>
+                            <button class="clear-receipt-btn">Clear Receipt</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
